@@ -5,25 +5,25 @@
   <body>
     <!-- Note the usage of `type=module` here as this is an ES6 module -->
     <script type="module">
-      import init, { Mandelbrot, memory } from './pkg/mandelbrot.js';
+      import init, { Mandelbrot} from './pkg/mandelbrot.js';
 
-      function draw(m) {
+      function draw(wasm, mdlbrt) {
         
-        const data_ptr = m.data();
-        const data = new Uint8Array(memory.buffer, data_ptr, m.width() * m.height());
-        for (let row = 0; row < m.height(); row++) {
-          for (let col = 0; col < m.width(); col++) {
-            const idx = row * m.width() + col;
-            console.log(row,col,m.data()[idx]);
+        const data_ptr = mdlbrt.data();
+        const data = new Uint8Array(wasm.memory.buffer, data_ptr, mdlbrt.width() * mdlbrt.height());
+        for (let row = 0; row < mdlbrt.height(); row++) {
+          for (let col = 0; col < mdlbrt.width(); col++) {
+            const idx = row * mdlbrt.width() + col;
+            console.log(row, col, data[idx]);
           }
         }
       }
       
       async function run() {
-        await init();
-        let m = Mandelbrot.new();
-        console.log(m.width(),m.height());
-        draw(m);
+        let wasm = await init();
+        let mdlbrt = Mandelbrot.new();
+        console.log(wasm, mdlbrt.width(),mdlbrt.height());
+        draw(wasm,mdlbrt);
       }
 
       run();
