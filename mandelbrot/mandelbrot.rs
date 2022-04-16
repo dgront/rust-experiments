@@ -11,6 +11,17 @@ pub struct Mandelbrot {
 #[wasm_bindgen]
 impl Mandelbrot {
 
+    pub fn new() -> Mandelbrot {
+        let width: u32 = 30;
+        let height: u32 = 30;
+
+	let size: usize = (width*height) as usize;
+        let mut data = Vec::with_capacity(size);
+        data.resize(size, 0);
+
+        return Mandelbrot {width, height, data};
+    }
+    
     pub fn width(&self) -> u32 { self.width }
 
     pub fn height(&self) -> u32 { self.height }
