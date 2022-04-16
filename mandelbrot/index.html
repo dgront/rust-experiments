@@ -1,0 +1,35 @@
+<html>
+  <head>
+    <meta content="text/html;charset=utf-8" http-equiv="Content-Type"/>
+  </head>
+  <body>
+    <!-- Note the usage of `type=module` here as this is an ES6 module -->
+    <script type="module">
+      import init, { Mandelbrot, memory } from './pkg/mandelbrot.js';
+
+      function draw(m) {
+        
+        const data_ptr = m.data();
+        const data = new Uint8Array(memory.buffer, data_ptr, m.width() * m.height());
+        for (let row = 0; row < m.height(); row++) {
+          for (let col = 0; col < m.width(); col++) {
+            const idx = row * m.width() + col;
+            console.log(row,col,m.data()[idx]);
+          }
+        }
+      }
+      
+      async function run() {
+        await init();
+        let m = Mandelbrot.new();
+        console.log(m.width(),m.height());
+        draw(m);
+      }
+
+      run();
+    </script>
+    
+    <canvas id="drawing"></canvas>
+  </body>
+</html>
+
