@@ -1,8 +1,10 @@
 <html>
   <head>
     <meta content="text/html;charset=utf-8" http-equiv="Content-Type"/>
+    <script src="https://cdn.jsdelivr.net/npm/brython@3/brython.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/brython@3/brython_stdlib.js"></script>
   </head>
-  <body>
+  <body onload="brython()">
     <!-- Note the usage of `type=module` here as this is an ES6 module -->
     <script type="module">
       import init, { Mandelbrot} from './pkg/mandelbrot.js';
@@ -11,17 +13,23 @@
         
         const data_ptr = mdlbrt.data();
         const data = new Uint8Array(wasm.memory.buffer, data_ptr, mdlbrt.width() * mdlbrt.height());
+	var c = document.getElementById("drawing");
+	var ctx = c.getContext("2d");
         for (let row = 0; row < mdlbrt.height(); row++) {
           for (let col = 0; col < mdlbrt.width(); col++) {
             const idx = row * mdlbrt.width() + col;
-            console.log(row, col, data[idx]);
+            if (data[idx] < 100)
+                ctx.fillRect(row*1,col*1,1,1);
+        //    console.log(row, col, data[idx]);
           }
         }
+        ctx.stroke();
       }
       
       async function run() {
         let wasm = await init();
         let mdlbrt = Mandelbrot.new();
+        mdlbrt.redraw();
         console.log(wasm, mdlbrt.width(),mdlbrt.height());
         draw(wasm,mdlbrt);
       }
@@ -29,7 +37,20 @@
       run();
     </script>
     
-    <canvas id="drawing"></canvas>
+    
+    <script type="text/python">
+    from browser import document, window
+    
+    def draw_mandelbrot(evt=None):
+        print(dir(window))
+        window.run()
+        
+    document["draw"].bind("click", draw_mandelbrot)
+    
+    </script>
+    
+    <canvas id="drawing" width="300" height="300"></canvas>
+    <button type="button" id="draw">Click Me!</button> 
   </body>
 </html>
 
