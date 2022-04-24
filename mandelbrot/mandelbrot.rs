@@ -65,3 +65,8 @@ impl Mandelbrot {
         return n;
     }
 }
+
+fn main() {
+    let mut m = Mandelbrot::new();
+    m.redraw();
+}
