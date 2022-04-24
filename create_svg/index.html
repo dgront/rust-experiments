@@ -1,0 +1,39 @@
+<html>
+  <head>
+    <meta content="text/html;charset=utf-8" http-equiv="Content-Type"/>
+    <script src="https://cdn.jsdelivr.net/npm/brython@3/brython.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/brython@3/brython_stdlib.js"></script>
+  </head>
+  <body onload="brython()">
+    <!-- Note the usage of `type=module` here as this is an ES6 module -->
+    <script type="module">
+      import {default as init} from './pkg/create_svg.js';
+      import * as exports from './pkg/create_svg.js';
+      Object.entries(exports).forEach(([name, exported]) => window[name] = exported);
+      
+      async function run() {
+        let wasm = await init();
+        window.circle = circle;
+      }
+
+      run();
+    </script>
+    
+    
+    <script type="text/python">
+    from browser import document, window
+    
+    def draw_circle(evt=None):
+        c = window.circle(2.0, 3.0, 11.0)
+        document["drawing"].innerHTML = c
+        print(c)
+        
+    document["draw"].bind("click", draw_circle)
+    
+    </script>
+    
+    <svg id="drawing" width="300" height="300"></svg>
+    <button type="button" id="draw">Click Me!</button> 
+  </body>
+</html>
+
