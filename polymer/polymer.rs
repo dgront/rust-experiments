@@ -1,6 +1,7 @@
 pub mod coordinates;
 
 use rand::Rng;
+use std::env;
 
 mod forcefields {
 
@@ -35,7 +36,7 @@ macro_rules! pairwise_contact_kernel {
         if d2 > $B2 { continue; }
         d = $chain.z[$i] - $z;
         d2 += d*d;
-        if d2 < $A2 { $en += 100.0; }
+        if d2 < $A2 { $en += 1000.0; }
         else {
             if d2 < $B2 {
                 $en += -1.0;
@@ -59,24 +60,17 @@ pub fn energy_for_position(pos:usize, chain: & coordinates::Coordinates) -> f64 
         en += (K*d*d) as f64;
     }
 
-    for i in 0..chain.size() {
-        pairwise_contact_kernel!(x,y,z,chain, i, A2,B2, en);
-        // let mut d = chain.x[i] - X;
-        // let mut d2 = d*d;
-        // if d2 > B2 { continue; }
-        // d = chain.y[i] - Y;
-        // d2 += d*d;
-        // if d2 > B2 { continue; }
-        // d = chain.z[i] - Z;
-        // d2 += d*d;
-        // if d2 < A2 { en += 100.0; }
-        // else {
-        //     if d2 < B2 {
-        //         en += -1.0;
-        //     }
-        // }
+    if pos > 1 {
+        for i in 0..pos - 1 {
+            pairwise_contact_kernel!(x,y,z,chain, i, A2, B2, en);
+        }
     }
-    return en - 100.0;      // subtract self-repulsion
+    if pos < chain.size()-2 {
+        for i in pos + 2..chain.size() {
+            pairwise_contact_kernel!(x,y,z,chain, i, A2, B2, en);
+        }
+    }
+    return en;
 }
 
 pub fn energy(chain: & coordinates::Coordinates) -> f64 {
@@ -90,10 +84,10 @@ pub fn energy(chain: & coordinates::Coordinates) -> f64 {
 pub fn sample(chain: &mut coordinates::Coordinates, temp: f64, n_cycles: i32) -> i32 {
     let mut rng = rand::thread_rng();
 
-    let step :f32 = 0.05;
+    let step :f32 = 0.5;
     let mut succ = 0;
-    for i in 0..n_cycles {
-        for j in 0..chain.size() {
+    for _i in 0..n_cycles {
+        for _j in 0..chain.size() {
             let i_moved = rng.gen_range(0..chain.size());
             let en_before = energy_for_position(i_moved,chain);
 
@@ -127,7 +121,7 @@ pub fn randomize_chain(bond_length:f32, chain: &mut coordinates::Coordinates) {
             chain.z[i] = chain.z[i-1] + z*bond_length;
             go_on = false;
             for j in 0..i {
-                if chain.distance_square(j,i) < A2 {
+                if chain.distance_square(j,i) <= A2 {
                     go_on = true;
                     break;
                 }
@@ -137,15 +131,20 @@ pub fn randomize_chain(bond_length:f32, chain: &mut coordinates::Coordinates) {
 }
 
 pub fn main() {
-    let n_small :i32 = 100000;
-    let n_big :i32 = 1000;
-    let n_beads :i32 = 100;
+    let args: Vec<String> = env::args().collect();
+
+    let n_small :i32 = 1000;
+    let n_beads: i32 = if args.len() > 1 { args[1].parse::<i32>().unwrap() } else { 100 };
+    let temp: f64 = if args.len() > 2 { args[2].parse::<f64>().unwrap() } else { 1.0 };
+    let n_big :i32 = if args.len() > 3 { args[3].parse::<i32>().unwrap() } else { 1000 };
     let mut chain = coordinates::Coordinates::new(n_beads as usize);
     randomize_chain(3.8, &mut chain);
     chain.to_pdb("");
     for i in 0..n_big {
-        let n_succ = sample(&mut chain,2.5,n_small);
-        println!("{}, {}",energy(&chain), (n_succ as f32)/((n_small*n_beads) as f32));
-        chain.to_pdb("");
+        let n_succ = sample(&mut chain,temp,n_small);
+        let (cx, cy, cz) = chain.cm();
+        println!("En: {} : {}, {}, {} {} {}", i, energy(&chain),
+                 (n_succ as f32) / ((n_small * n_beads) as f32), cx, cy, cz);
+        if i % 10 == 0 { chain.to_pdb(""); }
     }
 }
