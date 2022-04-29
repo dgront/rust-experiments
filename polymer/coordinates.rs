@@ -42,12 +42,23 @@ impl Coordinates {
             if out_fname=="" {Box::new(stdout())}
             else {Box::new(stdout())});
 
-        out_writer.write(b"MODEL    0\n");
+        out_writer.write(b"MODEL    0\n").ok();
         for i in 0..self.size() {
             out_writer.write(format!("ATOM   {:4}{}  ALA A{:4}    {:8.3}{:8.3}{:8.3}  1.00 99.88           C\n",
-                    i+1, " CA ", i+1, self.x[i], self.y[i], self.z[i]).as_bytes());
+                    i+1, " CA ", i+1, self.x[i], self.y[i], self.z[i]).as_bytes()).ok();
         }
-        out_writer.write(b"ENDMDL\n");
+        out_writer.write(b"ENDMDL\n").ok();
+    }
+
+    pub fn cm(&self) -> (f64,f64,f64) {
+        let mut cx :f64 = 0.0;
+        let mut cy :f64 = 0.0;
+        let mut cz :f64 = 0.0;
+        for i in 0..self.size() { cx += self.x[i] as f64; }
+        for i in 0..self.size() { cy += self.y[i] as f64; }
+        for i in 0..self.size() { cz += self.z[i] as f64; }
+        let n: f64 = self.size() as f64;
+        return (cx / n, cy / n, cz / n);
     }
 }
 
