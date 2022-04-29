@@ -9,8 +9,8 @@ rand="0.8.5"
 
 [lib]
 crate-type =["cdylib"]
-path = "coordinates.rs"
+path = "src/coordinates.rs"
 
 [[bin]]
 name = "polymer"
-path = "polymer.rs"
+path = "src/polymer.rs"
