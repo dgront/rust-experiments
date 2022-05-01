@@ -7,10 +7,14 @@ edition = "2021"
 #wasm-bindgen = "0.2.80"
 rand="0.8.5"
 
-[lib]
-crate-type =["cdylib"]
-path = "src/coordinates.rs"
+#[lib]
+#crate-type =["cdylib"]
+#path = "src/coordinates.rs"
 
 [[bin]]
-name = "polymer"
+name = "polymer_aos"
+path = "src/polymer_v.rs"
+
+[[bin]]
+name = "polymer_soa"
 path = "src/polymer.rs"
