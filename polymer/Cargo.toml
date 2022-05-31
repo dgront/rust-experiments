@@ -9,12 +9,12 @@ rand="0.8.5"
 
 #[lib]
 #crate-type =["cdylib"]
-#path = "src/coordinates.rs"
+#path = "src/coordinates_aos.rs"
 
 [[bin]]
 name = "polymer_aos"
-path = "src/polymer_v.rs"
+path = "src/polymer_aos.rs"
 
 [[bin]]
 name = "polymer_soa"
-path = "src/polymer.rs"
+path = "src/polymer_soa.rs"

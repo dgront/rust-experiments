@@ -1,4 +1,4 @@
-pub mod coordinates;
+pub mod coordinates_soa;
 
 use rand::Rng;
 use std::env;
@@ -35,7 +35,7 @@ macro_rules! pairwise_contact_kernel {
     }
 }
 
-pub fn energy_for_position(pos:usize, chain: & coordinates::Coordinates) -> f64 {
+pub fn energy_for_position(pos:usize, chain: & coordinates_soa::Coordinates) -> f64 {
     let mut en: f64 = 0.0;
 
     let x:f32 = chain.x[pos];
@@ -63,7 +63,7 @@ pub fn energy_for_position(pos:usize, chain: & coordinates::Coordinates) -> f64 
     return en;
 }
 
-pub fn energy(chain: & coordinates::Coordinates) -> f64 {
+pub fn energy(chain: & coordinates_soa::Coordinates) -> f64 {
     let mut en: f64 = 0.0;
     for i in 0..chain.size() {
         en += energy_for_position(i,chain);
@@ -71,7 +71,7 @@ pub fn energy(chain: & coordinates::Coordinates) -> f64 {
     return en / 2.0;
 }
 
-pub fn sample(chain: &mut coordinates::Coordinates, temp: f64, n_cycles: i32) -> i32 {
+pub fn sample(chain: &mut coordinates_soa::Coordinates, temp: f64, n_cycles: i32) -> i32 {
     let mut rng = rand::thread_rng();
 
     let step :f32 = 0.5;
@@ -95,13 +95,13 @@ pub fn sample(chain: &mut coordinates::Coordinates, temp: f64, n_cycles: i32) ->
     return succ;
 }
 
-pub fn randomize_chain(bond_length:f32, chain: &mut coordinates::Coordinates) {
+pub fn randomize_chain(bond_length:f32, chain: &mut coordinates_soa::Coordinates) {
     chain.set(0,0.0);
 
     for i in 1..chain.size() {
         let mut go_on:bool = true;
         while go_on {
-            let (x, y, z) = coordinates::random_unit_versor();
+            let (x, y, z) = coordinates_soa::random_unit_versor();
             chain.x[i] = chain.x[i-1] + x*bond_length;
             chain.y[i] = chain.y[i-1] + y*bond_length;
             chain.z[i] = chain.z[i-1] + z*bond_length;
@@ -123,7 +123,7 @@ pub fn main() {
     let n_beads: i32 = if args.len() > 1 { args[1].parse::<i32>().unwrap() } else { 100 };
     let temp: f64 = if args.len() > 2 { args[2].parse::<f64>().unwrap() } else { 1.0 };
     let n_big :i32 = if args.len() > 3 { args[3].parse::<i32>().unwrap() } else { 1000 };
-    let mut chain = coordinates::Coordinates::new(n_beads as usize);
+    let mut chain = coordinates_soa::Coordinates::new(n_beads as usize);
     randomize_chain(3.8, &mut chain);
     chain.to_pdb("");
     let before = Instant::now();
