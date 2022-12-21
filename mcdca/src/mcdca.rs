@@ -43,10 +43,11 @@ impl Couplings {
 
     /// Initializes coupling from a given set of sequences.
     ///
+    /*
     pub fn init_couplings_by_msa(&mut self, msa: &Vec<Sequence>) {
         for sequence in msa {
             for i_pos in 1..self.n {
-                let i_aa = sequence.aa(i_pos);
+                let i_aa = sequence.char(i_pos);
                 let ii = i_pos * self.k + self.aa_to_index[&i_aa];
                 for j_pos in 0..i_pos {
                     let j_aa = self.aa_to_index[&sequence.aa(j_pos)];
@@ -55,7 +56,7 @@ impl Couplings {
             }
         }
         self.cplngs.iter_mut().for_each(|el| el.iter_mut().for_each(|iel| *iel /= msa.len() as f32));
-    }
+    } */
 
     /// Prints the large matrix of couplings on the screen
     pub fn show_matrix(n:usize, k:usize, m: &Vec<Vec<f32>>) {
@@ -151,7 +152,7 @@ pub fn isothermal_mc(system: &mut Vec<u8>, energy: &Couplings, inner_cycles: i32
 }
 
 pub fn main() {
-    let seq_len: usize = 100;
+    let seq_len: usize = 56;
     let mut system: Vec<u8> = vec![0; seq_len];
 
     let mut en: Couplings = Couplings::new(seq_len, "ACDEFGHIKLMNPQRSTVWY-");
@@ -160,7 +161,7 @@ pub fn main() {
     en.init_couplings_diagonaly();
 
     en.total_energy(&system);
-    let counts = isothermal_mc(&mut system, &en,10,100000);
+    let counts = isothermal_mc(&mut system, &en,1000,10000);
     // en.show();
     Couplings::show_matrix(en.n, en.k, &counts);
 }
