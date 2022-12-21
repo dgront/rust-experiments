@@ -2,8 +2,13 @@ use std::ops::Range;
 use rand::Rng;
 
 mod vec2;
+mod montecarlo;
+mod energy;
+
 use vec2::{Coordinates, square_grid_atoms};
 use crate::vec2::coordinates_to_pdb;
+use crate::montecarlo::{MetropolisCriterion, MCProtocol};
+use crate::energy::Energy;
 
 pub fn main() {
     let n: usize = 20;
@@ -29,9 +34,13 @@ pub fn main() {
     }
 }
 
-pub trait Energy {
-    fn energy(&self, system: &Coordinates) -> f64;
-    fn energy_by_pos(&self, system: &Coordinates, pos: usize) -> f64;
+pub fn single_atom_move(future: &mut Coordinates, max_step:f64) -> Range<usize> {
+    let mut rng = rand::thread_rng();
+    let i_moved = rng.gen_range(0..future.size());
+    future.add(i_moved,rng.gen_range(-max_step..max_step),
+               rng.gen_range(-max_step..max_step));
+
+    i_moved..i_moved
 }
 
 struct HardDisk { r: f64, e_rep: f64, r2: f64 }
@@ -68,122 +77,6 @@ impl Energy for HardDisk {
             if d2.le(&self.r2) { e += self.e_rep }
         }
         return e;
-    }
-}
-
-pub struct AdaptiveMoverStats {
-    n_succ:i32,
-    n_failed:i32,
-    move_range: f64,
-    factor: f64,
-    max_move_range:Range<f64>
-}
-
-impl AdaptiveMoverStats {
-    pub fn new(max_move_range:Range<f64>) -> AdaptiveMoverStats {
-        AdaptiveMoverStats {
-            n_succ: 0,
-            n_failed: 0,
-            move_range: (max_move_range.end - max_move_range.start)/2.0,
-            factor: 0.95,
-            max_move_range: max_move_range,
-        }
-    }
-
-    pub fn add_success(&mut self) { self.n_succ+=1; }
-    pub fn add_failure(&mut self) { self.n_failed+=1; }
-    pub fn success_rate(&self) -> f64 { self.n_succ as f64 / (self.n_succ as f64 + self.n_failed as f64) }
-
-    pub fn adapt_range(&mut self) {
-        let rate = self.success_rate();
-        if rate < 0.35 { self.move_range *= self.factor }
-        if rate > 0.45 { self.move_range /=self.factor }
-        if self.max_move_range.end.lt(&self.move_range) { self.move_range = self.max_move_range.end }
-        if self.max_move_range.start.gt(&self.move_range) { self.move_range = self.max_move_range.start }
-    }
-}
-
-pub fn single_atom_move(future: &mut Coordinates, max_step:f64) -> Range<usize> {
-    let mut rng = rand::thread_rng();
-    let i_moved = rng.gen_range(0..future.size());
-    future.add(i_moved,rng.gen_range(-max_step..max_step),
-               rng.gen_range(-max_step..max_step));
-
-    i_moved..i_moved
-}
-
-pub trait AcceptanceCriterion {
-    fn check(&mut self, energy_before: f64, energy_after: f64) -> bool;
-}
-
-struct MetropolisCriterion {
-    pub temperature: f64
-}
-
-impl AcceptanceCriterion for MetropolisCriterion {
-    fn check(&mut self, energy_before: f64, energy_after: f64) -> bool {
-        let mut rng = rand::thread_rng();
-        let delta_e = energy_after - energy_before;
-        if delta_e <= 0.0 || rng.gen_range(0.0..1.0) <= (-delta_e / self.temperature).exp() { return true }
-        return false;
-    }
-}
-
-struct MCProtocol<T: AcceptanceCriterion> {
-    pub acceptance_criterion: T,
-    movers_stats: Vec<AdaptiveMoverStats>,
-    movers: Vec<Box<dyn Fn(&mut Coordinates,f64) -> Range<usize>>>
-}
-
-
-impl<T: AcceptanceCriterion> MCProtocol<T> {
-    pub fn new(acc_crit: T) -> MCProtocol<T> {
-        MCProtocol {
-            acceptance_criterion: acc_crit,
-            movers_stats: vec![],
-            movers: vec![]
-        }
-    }
-
-    pub fn add_mover(&mut self, perturb_fn: Box<dyn Fn(&mut Coordinates,f64) -> Range<usize>>, allowed_range: Range<f64>){
-        self.movers_stats.push(AdaptiveMoverStats::new(allowed_range));
-        self.movers.push(perturb_fn);
-    }
-
-    pub fn make_sweeps(&mut self, n:usize, coords: &mut Coordinates, energy: &Box<dyn Energy>) {
-        for _ in 0..n {
-            self.make_sweep(coords, energy);
-        }
-    }
-
-    pub fn make_sweep(&mut self, coords: &mut Coordinates, energy: &Box<dyn Energy>) {
-        let mut future_coords = coords.clone();
-        for i_mover in 0..self.movers.len() {
-            let stats = &mut self.movers_stats[i_mover];
-            let mover = & self.movers[i_mover];
-            for _ in 0..coords.size() {
-                // ---------- Make a move on future system
-                let range: Range<usize> = mover(&mut future_coords, stats.move_range);
-                // ---------- Evaluate energy
-                let en_before = energy.energy_by_pos(coords,range.start);
-                let en_after = energy.energy_by_pos(&future_coords, range.start);
-                // ---------- apply acceptance criterion, copy or undo the move
-                if self.acceptance_criterion.check(en_before, en_after) {
-                    // --- update mover counts, copy future_pose on current_pose to make the move
-                    for ipos in range.start..range.end + 1 {
-                        coords.copy_from(ipos, &future_coords);
-                    }
-                    stats.add_success();
-                }
-                else {
-                    // --- update mover failures, copy current_pose on future_pose to clear the move
-                    for ipos in range.start..range.end + 1 {
-                        future_coords.copy_from(ipos, &coords);
-                    }
-                    stats.add_failure();
-                }
-            }
-        }
     }
 }
 

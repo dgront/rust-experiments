@@ -1,6 +1,6 @@
 use std::ops::{Index, IndexMut};
 use std::fs::File;
-use std::io::{self, BufReader, BufRead, Write};
+use std::io::{Write};
 
 #[derive(Clone, Debug)]
 pub struct Vec2 {
@@ -173,7 +173,7 @@ pub fn square_grid_atoms(system: &mut Coordinates) {
 }
 
 pub fn coordinates_to_pdb(chain: &Coordinates, i_model: i16, out_fname: &str, if_append: bool) {
-    let mut out_writer = File::options().append(true).write(true).create(true).open(&out_fname).ok().unwrap();
+    let mut out_writer = File::options().append(if_append).write(true).create(true).open(&out_fname).ok().unwrap();
 
     out_writer.write(format!("MODEL    {i_model}\n").as_bytes()).ok();
     for i in 0..chain.size() {
