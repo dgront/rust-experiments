@@ -1,6 +1,7 @@
 
 use std::ops::Range;
 use rand::Rng;
+use rand::rngs::ThreadRng;
 
 use crate::Energy;
 use crate::{System};
@@ -42,14 +43,19 @@ pub trait AcceptanceCriterion {
 }
 
 pub struct MetropolisCriterion {
-    pub temperature: f64
+    pub temperature: f64,
+    rng: ThreadRng
+}
+
+impl MetropolisCriterion {
+    pub fn new(temperature: f64) -> MetropolisCriterion { MetropolisCriterion{temperature, rng:rand::thread_rng()} }
 }
 
 impl AcceptanceCriterion for MetropolisCriterion {
     fn check(&mut self, energy_before: f64, energy_after: f64) -> bool {
-        let mut rng = rand::thread_rng();
+        // let mut rng = rand::thread_rng();
         let delta_e = energy_after - energy_before;
-        if delta_e <= 0.0 || rng.gen_range(0.0..1.0) <= (-delta_e / self.temperature).exp() { return true }
+        if delta_e <= 0.0 || self.rng.gen_range(0.0..1.0) <= (-delta_e / self.temperature).exp() { return true }
         return false;
     }
 }
@@ -89,9 +95,8 @@ impl<T: AcceptanceCriterion, S: System> MCProtocol<T, S> {
             for _ in 0..coords.size() {
                 // ---------- Make a move on future system
                 let range: Range<usize> = mover(&mut future_coords, stats.move_range);
-                // ---------- Evaluate energy
-                let en_before = energy.energy_by_pos(coords,range.start);
-                let en_after = energy.energy_by_pos(&future_coords, range.start);
+                // ---------- Evaluate energy difference
+                let (en_before, en_after) = energy.delta_energy_by_pos(coords, &future_coords, range.start);
                 // ---------- apply acceptance criterion, copy or undo the move
                 if self.acceptance_criterion.check(en_before, en_after) {
                     // --- update mover counts, copy future_pose on current_pose to make the move
