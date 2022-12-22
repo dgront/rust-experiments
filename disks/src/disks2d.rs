@@ -2,12 +2,11 @@ use std::ops::Range;
 use rand::Rng;
 
 mod vec2;
-mod montecarlo;
-mod energy;
 
-use vec2::{Coordinates, square_grid_atoms, System, coordinates_to_pdb};
-use crate::montecarlo::{MetropolisCriterion, MCProtocol};
-use crate::energy::Energy;
+use simulations_base::{Energy, MetropolisCriterion, MCProtocol, System};
+use vec2::{Coordinates, square_grid_atoms, coordinates_to_pdb};
+// use crate::montecarlo::{MetropolisCriterion, MCProtocol};
+// use crate::energy::Energy;
 
 pub fn main() {
     let n: usize = 20;

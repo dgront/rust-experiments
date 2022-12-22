@@ -2,6 +2,8 @@ use std::ops::{Index, IndexMut};
 use std::fs::File;
 use std::io::{Write};
 
+use simulations_base::{System};
+
 #[derive(Clone, Debug)]
 pub struct Vec2 {
     pub x: f64,
@@ -46,11 +48,6 @@ macro_rules! closest_image {
             if $delta < -$L2 {$delta += $L}
         }
     }
-}
-
-pub trait System: Clone {
-    fn size(&self) -> usize;
-    fn copy_from(&mut self, i:usize, rhs: &Self);
 }
 
 impl Coordinates {
