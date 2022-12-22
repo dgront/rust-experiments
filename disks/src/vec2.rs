@@ -48,6 +48,11 @@ macro_rules! closest_image {
     }
 }
 
+pub trait System: Clone {
+    fn size(&self) -> usize;
+    fn copy_from(&mut self, i:usize, rhs: &Self);
+}
+
 impl Coordinates {
 
     pub fn new(n: usize) -> Coordinates {
@@ -117,8 +122,6 @@ impl Coordinates {
         d
     }
 
-    pub fn size(&self) -> usize { return self.v.len(); }
-
     pub fn x(&self, i:usize) -> f64 { self.v[i].x }
 
     pub fn y(&self, i:usize) -> f64 { self.v[i].y }
@@ -137,10 +140,16 @@ impl Coordinates {
         wrap_coordinate_to_box!(self.v[i].y + y, self.box_len, self.v[i].y);
     }
 
+}
+
+impl System for Coordinates {
+
+    fn size(&self) -> usize { return self.v.len(); }
+
     /// Copy coordinates of i-th atom from a given rhs coordinates
     /// This method (unlike set()) does not apply PBC. To the contrary, it assumes the two systems:
     /// this and RHS have exactly the same simulation box geometry
-    pub fn copy_from(&mut self, i:usize, rhs: &Coordinates) {
+    fn copy_from(&mut self, i:usize, rhs: &Coordinates) {
         self.v[i].x = rhs.v[i].x;
         self.v[i].y = rhs.v[i].y;
     }

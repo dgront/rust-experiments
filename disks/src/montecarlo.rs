@@ -3,7 +3,7 @@ use std::ops::Range;
 use rand::Rng;
 
 use crate::energy::Energy;
-use crate::vec2::Coordinates;
+use crate::vec2::{Coordinates, System};
 
 pub struct AdaptiveMoverStats {
     n_succ:i32,
@@ -54,15 +54,15 @@ impl AcceptanceCriterion for MetropolisCriterion {
     }
 }
 
-pub struct MCProtocol<T: AcceptanceCriterion> {
+pub struct MCProtocol<T: AcceptanceCriterion, S: System> {
     pub acceptance_criterion: T,
     movers_stats: Vec<AdaptiveMoverStats>,
-    movers: Vec<Box<dyn Fn(&mut Coordinates,f64) -> Range<usize>>>
+    movers: Vec<Box<dyn Fn(&mut S,f64) -> Range<usize>>>
 }
 
 
-impl<T: AcceptanceCriterion> MCProtocol<T> {
-    pub fn new(acc_crit: T) -> MCProtocol<T> {
+impl<T: AcceptanceCriterion, S: System> MCProtocol<T, S> {
+    pub fn new(acc_crit: T) -> MCProtocol<T, S> {
         MCProtocol {
             acceptance_criterion: acc_crit,
             movers_stats: vec![],
@@ -70,18 +70,18 @@ impl<T: AcceptanceCriterion> MCProtocol<T> {
         }
     }
 
-    pub fn add_mover(&mut self, perturb_fn: Box<dyn Fn(&mut Coordinates,f64) -> Range<usize>>, allowed_range: Range<f64>){
+    pub fn add_mover(&mut self, perturb_fn: Box<dyn Fn(&mut S,f64) -> Range<usize>>, allowed_range: Range<f64>){
         self.movers_stats.push(AdaptiveMoverStats::new(allowed_range));
         self.movers.push(perturb_fn);
     }
 
-    pub fn make_sweeps(&mut self, n:usize, coords: &mut Coordinates, energy: &Box<dyn Energy>) {
+    pub fn make_sweeps(&mut self, n:usize, coords: &mut S, energy: &Box<dyn Energy<S>>) {
         for _ in 0..n {
             self.make_sweep(coords, energy);
         }
     }
 
-    pub fn make_sweep(&mut self, coords: &mut Coordinates, energy: &Box<dyn Energy>) {
+    pub fn make_sweep(&mut self, coords: &mut S, energy: &Box<dyn Energy<S>>) {
         let mut future_coords = coords.clone();
         for i_mover in 0..self.movers.len() {
             let stats = &mut self.movers_stats[i_mover];

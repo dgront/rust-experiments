@@ -5,8 +5,7 @@ mod vec2;
 mod montecarlo;
 mod energy;
 
-use vec2::{Coordinates, square_grid_atoms};
-use crate::vec2::coordinates_to_pdb;
+use vec2::{Coordinates, square_grid_atoms, System, coordinates_to_pdb};
 use crate::montecarlo::{MetropolisCriterion, MCProtocol};
 use crate::energy::Energy;
 
@@ -18,11 +17,11 @@ pub fn main() {
     square_grid_atoms(&mut system);
     
     // ---------- Sampling
-    let mut sampler: MCProtocol<MetropolisCriterion> = MCProtocol::new(MetropolisCriterion{ temperature: 1.0});
+    let mut sampler: MCProtocol<MetropolisCriterion,Coordinates> = MCProtocol::new(MetropolisCriterion{ temperature: 1.0});
     sampler.add_mover(Box::new(single_atom_move), 0.1..3.0);
 
     // ---------- scoring
-    let en: Box<dyn Energy> = Box::new(HardDisk::new(4.0,100.0));
+    let en: Box<dyn Energy<Coordinates>> = Box::new(HardDisk::new(4.0,100.0));
     
     // ---------- simulation
     println!("{}",en.energy(&system));
@@ -53,7 +52,7 @@ impl HardDisk {
     pub fn r(&self) -> f64 { self.r }
 }
 
-impl Energy for HardDisk {
+impl Energy<Coordinates> for HardDisk {
 
     fn energy(&self, system: &Coordinates) -> f64 {
         let mut e = 0.0f64;
