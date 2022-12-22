@@ -1,0 +1,15 @@
+
+[package]
+name = "simulations-base"
+version = "4.0.0-dev"
+edition = "2021"
+description = "Provides base traits and structs for simulations"
+homepage = "https://bioshell.pl"
+license = "Apache-2.0"
+keywords = ["bioshell"]
+
+[lib]
+crate-type =["rlib"]
+
+[dependencies]
+rand="0.8.5"
