@@ -1,7 +1,7 @@
 use rand::Rng;
 use std::collections::HashMap;
 
-use bioshell_core::Sequence;
+use bioshell_core::sequence::Sequence;
 
 
 pub struct Couplings {
@@ -161,7 +161,7 @@ pub fn main() {
     en.init_couplings_diagonaly();
 
     en.total_energy(&system);
-    let counts = isothermal_mc(&mut system, &en,1000,10000);
+    let counts = isothermal_mc(&mut system, &en,1000,1000);
     // en.show();
     Couplings::show_matrix(en.n, en.k, &counts);
 }
