@@ -53,9 +53,6 @@ impl AcceptanceCriterion for MetropolisCriterion {
         // let mut rng = rand::thread_rng();
         let delta_e = energy_after - energy_before;
         if delta_e <= 0.0 || self.rng.gen_range(0.0..1.0) <= (-delta_e / self.temperature).exp() {
-            if energy_after > 100.0 {
-                println!("{} {}",energy_before,energy_after)
-            }
             return true
         }
         return false;

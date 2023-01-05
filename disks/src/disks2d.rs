@@ -10,7 +10,7 @@ use vec2::{Coordinates, square_grid_atoms, coordinates_to_pdb};
 pub fn main() {
     const N: usize = 20;
     const R_REP: f64 = 4.0;
-    const E_REP: f64 = 100000.0;
+    const E_REP: f64 = 10000.0;
 
     // ---------- system
     let mut system = Coordinates::new(N * N);
@@ -35,7 +35,7 @@ pub fn main() {
     println!("{}",en.energy(&system));
     let mut recent_acceptance = AcceptanceStatistics::default();
     coordinates_to_pdb(&system,1,"tra.pdb", false);
-    for i in 0..10000 {
+    for i in 0..1000 {
         sampler.make_sweeps(100,&mut system, &en);
         let stats = sampler.get_mover(0).acceptance_statistics();
         println!("{} {} {}", i, en.energy(&system),
@@ -79,15 +79,6 @@ impl Mover<Coordinates> for DiskMover {
     fn max_range(&self) -> f64 { return self.max_step; }
 
     fn set_max_range(&mut self, new_val: f64) { self.max_step = new_val; }
-}
-
-pub fn single_atom_move(future: &mut Coordinates, max_step:f64) -> Range<usize> {
-    let mut rng = rand::thread_rng();
-    let i_moved = rng.gen_range(0..future.size());
-    future.add(i_moved,rng.gen_range(-max_step..max_step),
-               rng.gen_range(-max_step..max_step));
-
-    i_moved..i_moved
 }
 
 struct HardDisk { r: f64, e_rep: f64, r2: f64, r2_2: f64 }

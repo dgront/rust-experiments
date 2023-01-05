@@ -4,7 +4,7 @@ use std::ops::Range;
 
 use bioshell_core::sequence::Sequence;
 
-use simulations_base::{Energy, MetropolisCriterion, MCProtocol, System};
+use simulations_base::{Energy, MetropolisCriterion, MCProtocol, System, MoversSet, Sampler, Mover, AcceptanceStatistics};
 
 #[derive(Clone)]
 pub struct SequenceSystem (Vec<u8>);
@@ -150,42 +150,36 @@ pub fn accumulate_counts(system: &SequenceSystem, n_aa:usize, counts: &mut Vec<V
     }
 }
 
-// pub fn isothermal_mc(system: &mut Vec<u8>, energy: &Couplings, inner_cycles: i32, outer_cycles: i32) -> Vec<Vec<f32>>{
-//
-//     let mut counts: Vec<Vec<f32>> = vec![vec![0.0; energy.n * energy.k]; energy.n * energy.k];
-//     let mut rng = rand::thread_rng();
-//     let mut total_en:f32 = energy.total_energy(&system);
-//     let mut n_obs: f32 = 0.0;
-//     let mut n_succ: f32 = 0.0;
-//     for io in 0..outer_cycles {
-//         for ii in 0..inner_cycles {
-//             for is in 0..system.len() {
-//                 let pos: usize = rng.gen_range(0..energy.n);
-//                 let new_aa: usize = rng.gen_range(0..energy.k);
-//                 let delta_en = energy.delta_energy(system, pos, system[pos] as usize, new_aa);
-//                 if delta_en > 0.0 && (-delta_en).exp() < rng.gen_range(0.0..1.0) { continue; }
-//                 system[pos] = new_aa as u8;
-//                 total_en += delta_en;
-//                 n_succ += 1.0;
-//             }
-//         }
-//         n_obs += 1.0;
-//         accumulate_counts(&system, energy.k, &mut counts);
-//         println!("{:4} {}",total_en, energy.decode_sequence(&system));
-//     }
-//     println!("#{}",n_succ / (outer_cycles*inner_cycles*system.len() as i32) as f32);
-//     counts.iter_mut().for_each(|el| el.iter_mut().for_each(|iel| *iel /= n_obs));
-//     return counts;
-// }
-
-pub fn single_aa_move(future: &mut SequenceSystem, max_step:f64) -> Range<usize> {
-    let mut rng = rand::thread_rng();
-    let i_moved = rng.gen_range(0..future.size());
-
-    future.0[i_moved] = rng.gen_range(0..max_step as u8);
-
-    i_moved..i_moved
+struct SingleAAMover {
+    n_aa: usize,
+    succ_rate: AcceptanceStatistics
 }
+
+impl SingleAAMover {
+    pub fn new(n_aa: usize) -> SingleAAMover { SingleAAMover{ n_aa, succ_rate: Default::default() } }
+}
+
+impl Mover<SequenceSystem> for SingleAAMover {
+    fn perturb(&mut self, system: &mut SequenceSystem) -> Range<usize> {
+        let mut rng = rand::thread_rng();
+        let i_moved = rng.gen_range(0..system.size());
+
+        system.0[i_moved] = rng.gen_range(0..self.n_aa as u8);
+
+        i_moved..i_moved
+    }
+
+    fn acceptance_statistics(&self) -> AcceptanceStatistics { self.succ_rate.clone() }
+
+    fn add_success(&mut self) { self.succ_rate.n_succ += 1; }
+
+    fn add_failure(&mut self) { self.succ_rate.n_failed += 1; }
+
+    fn max_range(&self) -> f64 { 1.0 }
+
+    fn set_max_range(&mut self, _new_val: f64) {  }
+}
+
 
 pub fn main() {
     // ---------- The system under study
@@ -195,19 +189,21 @@ pub fn main() {
     // ---------- Coupling energy
     let aa_order = "ACDEFGHIKLMNPQRSTVWY-";
     let aa_len = aa_order.len();
-    let mut en: Box<dyn Energy<SequenceSystem>> = Box::new(Couplings::new(seq_len, aa_order));
+    let en: Box<dyn Energy<SequenceSystem>> = Box::new(Couplings::new(seq_len, aa_order));
+    // let en = Box::new(Couplings::new(seq_len, aa_order));
     en.energy(&system);
 
     // ---------- Sampling
     let mut sampler: MCProtocol<MetropolisCriterion,SequenceSystem> = MCProtocol::new(MetropolisCriterion::new(1.0));
-    sampler.add_mover(Box::new(single_aa_move), 0.0..aa_len as f64);
+    sampler.add_mover(Box::new(SingleAAMover::new(aa_len)));
 
     // ---------- Observe counts for amino acids
     let mut counts: Vec<Vec<f32>> = vec![vec![0.0; seq_len * aa_len]; seq_len * aa_len];
 
     for i in 0..1000 {
-        sampler.make_sweeps(1000,&mut system, &en);
+        sampler.make_sweeps(10,&mut system, &en);
         accumulate_counts(&system, aa_len, &mut counts);
+
         println!("{} {}", i, en.energy(&system));
     }
 
