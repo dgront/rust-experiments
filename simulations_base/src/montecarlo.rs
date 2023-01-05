@@ -194,7 +194,6 @@ impl<T: AcceptanceCriterion, S: System> Sampler<T, S>  for AdaptiveMCProtocol<T,
             if self.allowed_ranges[i].end.lt(&range) { range = self.allowed_ranges[i].end }
             if self.allowed_ranges[i].start.gt(&range) { range = self.allowed_ranges[i].start }
             mover.set_max_range(range);
-            println!("{} {}",mover.max_range(), rate);
         }
     }
 }
