@@ -28,15 +28,7 @@ pub fn check_device() -> bool {
     }
 }
 
-#[inline(always)]
-unsafe fn _mm256_reduce_add_ps(x: __m256) -> f32 {
-    // this is fine since AVX is a superset of SSE - meaning we are guaranted
-    // to have the SSE instructions available to us
-    let x128: __m128 = _mm_add_ps(_mm256_extractf128_ps(x, 1), _mm256_castps256_ps128(x));
-    let x64: __m128 = _mm_add_ps(x128, _mm_movehl_ps(x128, x128));
-    let x32: __m128 = _mm_add_ss(x64, _mm_shuffle_ps(x64, x64, 0x55));
-    _mm_cvtss_f32(x32)
-}
+
 
 #[allow(unsafe_code)]
 #[inline(always)]
@@ -46,20 +38,35 @@ pub unsafe fn dp(a: &[f32],b: &[f32]) -> f32 {
 
     let ptr_a = a.as_ptr();
     let ptr_b = b.as_ptr();
+    let ptr_a_i = a.as_ptr() as *mut i8;
+    let ptr_b_i = b.as_ptr() as *mut i8;
 
     let n_iter = (a.len() / 8) as isize;
     let mut sum = _mm256_setzero_ps();
     for i in 0..n_iter {
+
+        if i < (n_iter - 1) {
+            _mm_prefetch(ptr_a_i.offset(8 * (i + 1)), _MM_HINT_T0);
+            _mm_prefetch(ptr_b_i.offset(8 * (i + 1)), _MM_HINT_T0);
+        }
+
 	println!("{}",i);
-	let a_vec: __m256 = _mm256_load_ps(ptr_b.offset(8 * i) as *mut f32);
+	let mut a_vec: __m256 = _mm256_loadu_ps(ptr_b.offset(8 * i) as *mut f32);
 	println!("{} {:?}",i, a_vec);
-	let b_vec: __m256 = _mm256_load_ps(ptr_a.offset(8 * i) as *mut f32);
+	let b_vec: __m256 = _mm256_loadu_ps(ptr_a.offset(8 * i) as *mut f32);
 	println!("{} {:?}",i, b_vec);
-	let tmp_vec: __m256 = _mm256_sub_ps(a_vec, b_vec);
-	sum = _mm256_fmadd_ps(tmp_vec, tmp_vec, sum);
+	a_vec = _mm256_sub_ps(a_vec, b_vec);
+	println!("{} {:?}",i, a_vec);
+	a_vec = _mm256_mul_ps(a_vec, a_vec);
+	sum = _mm256_add_ps(a_vec, sum);
+	println!("sum: {} {:?}",i, sum);
     }
 
-    let result = self::_mm256_reduce_add_ps(sum);
+    let cvlo = _mm256_extractf128_ps(sum, 0);
+    let cvhi = _mm256_extractf128_ps(sum, 1);
+    let x = _mm_extract_ps::<2>(cvhi);
+    let result = f32::from_bits(x as u32);
+
     return result;
 }
 
