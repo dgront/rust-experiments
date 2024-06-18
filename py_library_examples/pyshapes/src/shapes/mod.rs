@@ -47,8 +47,8 @@ impl Shape {
         self.vertices.push(vertex);
     }
 
-    pub fn get_vertices(&self) -> Vec<Vertex> {
-        self.vertices.clone()
+    pub fn get_vertices(&self) -> &Vec<Vertex> {
+        &self.vertices
     }
 
     pub fn center(&self) -> Vertex {
