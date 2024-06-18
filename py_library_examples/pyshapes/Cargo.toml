@@ -3,16 +3,22 @@ name = "shapes"
 version = "0.1.0"
 edition = "2021"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [lib]
 name = "shapes"
-crate-type = ["cdylib", "rlib"]
+crate-type = ["cdylib"]
 
 [[example]]
 name = "demo"
 path = "examples/demo.rs"
 
+rustflags = [
+    "-C", "link-arg=-fPIC"
+]
+
+[env]
+PYO3_PYTHON="/usr/bin/python3.9"
+
 
 [dependencies]
-pyo3 = "0.20.0"
+pyo3 = { version = "0.21.2", features = ["extension-module"] }
 lazy_static = "1.4"
