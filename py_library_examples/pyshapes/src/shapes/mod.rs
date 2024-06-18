@@ -51,6 +51,38 @@ impl Shape {
         self.vertices.clone()
     }
 
+    pub fn center(&self) -> Vertex {
+        let count = self.vertices.len() as f32;
+        let sum = self.vertices.iter().fold(Vertex::new(0.0, 0.0), |acc, v| Vertex {
+            x: acc.x + v.x,
+            y: acc.y + v.y,
+        });
+
+        Vertex {
+            x: sum.x / count,
+            y: sum.y / count,
+        }
+    }
+
+    pub fn is_point_in_polygon(&self, point: &Vertex) -> bool {
+        let mut intersections = 0;
+        let num_vertices = self.vertices.len();
+        let mut j = num_vertices - 1; // Previous vertex index
+
+        for i in 0..num_vertices {
+            let vi = &self.vertices[i];
+            let vj = &self.vertices[j];
+
+            if (vi.y > point.y) != (vj.y > point.y) &&
+                (point.x < (vj.x - vi.x) * (point.y - vi.y) / (vj.y - vi.y) + vi.x) {
+                intersections += 1;
+            }
+            j = i;
+        }
+
+        intersections % 2 != 0
+    }
+
     pub fn __repr__(&self) -> String {
         let vertices: Vec<String> = self.vertices.iter().map(|v| v.__repr__()).collect();
         format!("Shape with vertices: [{}]", vertices.join(", "))
