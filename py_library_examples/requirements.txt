@@ -1,0 +1,2 @@
+maturin==1.7.0
+-e git+ssh://git@github.com/dgront/rust-experiments.git@a69c609ed6d8175b413ee7e34d1188285bb1fa13#egg=shapes&subdirectory=py_library_examples/pyshapes
