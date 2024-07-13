@@ -33,20 +33,20 @@ fn main() {
                 let mut circ = Circle::new(&id, x, y, box_width);
                 circ.style = style;
                 drawing.add_element(Box::new(circ));
-                // shapes.push(Box::new(circ));
+                // separated_approach.push(Box::new(circ));
             } else {
                 let mut rect = Rect::new(&id, x, y, box_width, box_width);
                 rect.style = style;
                 let angle = rng.gen_range(0.0..=i as f32 * j as f32 * 60.0 / (n_x * n_y) as f32);
                 rect.style.set_angle(angle);
                 drawing.add_element(Box::new(rect));
-                // shapes.push(Box::new(rect));
+                // separated_approach.push(Box::new(rect));
             }
         }
     }
     drawing.draw();
     // println!(r##"<svg width="#{draw_width}" height="{draw_width}" xmlns="http://www.w3.org/2000/svg">"##);
-    // for r in shapes {
+    // for r in separated_approach {
     //     println!("{}", &r.to_svg());
     // }
     // println!("</svg>");

@@ -1,7 +1,10 @@
+use std::cell::RefCell;
 use std::fmt;
 // use std::sync::{Arc, Mutex};
-use pyo3::{pyclass, pymethods, pymodule, PyResult, Python};
+use pyo3::{IntoPy, Py, PyAny, PyCell, pyclass, PyErr, pymethods, pymodule, PyObject, PyRef, PyRefMut, PyResult, Python, ToPyObject};
+use pyo3::exceptions::PyIndexError;
 use pyo3::prelude::PyModule;
+use pyo3::types::PyList;
 
 #[pyclass]
 #[derive(Debug, Clone)]
@@ -34,6 +37,11 @@ impl fmt::Display for Vertex {
 #[pyclass]
 pub struct Shape {
     vertices: Vec<Vertex>,
+}
+
+#[pyclass]
+pub struct Vertices {
+    pub vertices: Vec<Vertex>,
 }
 
 #[pymethods]

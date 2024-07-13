@@ -1,0 +1,16 @@
+[workspace]
+resolver = "2"
+members = ["shapes", "py_shapes"]
+
+
+[workspace.package]
+name = "shapes"
+version = "0.1.0"
+edition = "2021"
+
+
+[workspace.dependencies]
+pyo3 = "0.22.1"
+lazy_static = "1.4"
+
+shapes = { path = "shapes" }

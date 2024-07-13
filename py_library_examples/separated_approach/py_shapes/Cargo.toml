@@ -1,0 +1,15 @@
+[package]
+name = "pyshapes"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "pyshapes"
+crate-type = ["cdylib", "lib"]
+
+
+[dependencies]
+pyo3 = { version = "0.22.1"}
+lazy_static = "1.4"
+
+shapes = { path = "../shapes" }
