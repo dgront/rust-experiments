@@ -41,7 +41,7 @@ impl fmt::Display for Color {
 #[derive(Clone, Debug)]
 pub struct Vertex {
     pub x: f32,
-    pub y: f32
+    pub y: f32,
 }
 
 impl Vertex {
@@ -59,61 +59,79 @@ impl fmt::Display for Vertex {
 
 pub struct Shape {
     color: Color,
-    vertices: Vec<Vertex>
+    vertices: Vec<Vertex>,
 }
 
 impl Shape {
     pub fn new() -> Self {
         Shape { color: Default::default(), vertices: vec![] }
     }
-
     pub fn add_vertex(&mut self, v: Vertex) {
         self.vertices.push(v);
     }
-
-    pub fn color(&mut self) -> &mut Color { &mut self.color }
-
-    pub fn vertices(&self) -> impl Iterator<Item = &Vertex> { self.vertices.iter() }
-
+    pub fn color(&mut self) -> &mut Color {
+        &mut self.color
+    }
+    pub fn vertices(&self) -> impl Iterator<Item = &Vertex> {
+        self.vertices.iter()
+    }
     pub fn center(&self) -> Vertex {
         let count = self.vertices.len() as f32;
         let sum = self.vertices.iter().fold(Vertex::new(0.0, 0.0), |acc, v| Vertex {
             x: acc.x + v.x,
             y: acc.y + v.y,
         });
-
         Vertex {
             x: sum.x / count,
             y: sum.y / count,
         }
     }
-
     pub fn is_point_in_inside(&self, point: &Vertex) -> bool {
         Shape::is_point_in_polygon_test(&mut self.vertices.iter(), point)
     }
-
     pub fn is_point_in_polygon_test<'a, I>(vertices: I, point: &Vertex) -> bool
-    where I: Iterator<Item = &'a Vertex>, {
-
+        where I: Iterator<Item = &'a Vertex>
+    {
         let vert_vec: Vec<&Vertex> = vertices.collect();
-
         let mut intersections = 0;
         let num_vertices = vert_vec.len();
         let mut j = num_vertices - 1; // Previous vertex index
-
         for i in 0..num_vertices {
             let vi = &vert_vec[i];
             let vj = &vert_vec[j];
-
-            if (vi.y > point.y) != (vj.y > point.y) &&
-                (point.x < (vj.x - vi.x) * (point.y - vi.y) / (vj.y - vi.y) + vi.x) {
+            if
+                (vi.y > point.y) != (vj.y > point.y) &&
+                point.x < ((vj.x - vi.x) * (point.y - vi.y)) / (vj.y - vi.y) + vi.x
+            {
                 intersections += 1;
             }
             j = i;
         }
-
         intersections % 2 != 0
     }
+}
+
+// Fonction autonome pour calculer la circonférence
+pub fn calculate_circumference<'a, I>(vertices: I) -> f32 where I: Iterator<Item = &'a Vertex> {
+    let vert_vec: Vec<&Vertex> = vertices.collect();
+
+    let num_vertices = vert_vec.len();
+    if num_vertices < 2 {
+        return 0.0;
+    }
+
+    let mut circumference = 0.0;
+
+    for i in 0..num_vertices {
+        let vi = &vert_vec[i];
+        let vj = if i == num_vertices - 1 { &vert_vec[0] } else { &vert_vec[i + 1] };
+
+        let dx = vj.x - vi.x;
+        let dy = vj.y - vi.y;
+        circumference += (dx * dx + dy * dy).sqrt();
+    }
+
+    circumference
 }
 
 // Implement Display for Shape

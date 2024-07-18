@@ -1,7 +1,8 @@
 use pyo3::{Py, pyclass, pymethods, Python};
 use pyo3::prelude::*;
 
-use shapes::{Vertex, Color, Shape};
+use shapes::{Vertex, Color, Shape, calculate_circumference};
+
 
 #[pyclass(name="Vertex")]
 #[derive(Debug, Clone)]
@@ -84,7 +85,13 @@ impl PyShape {
         };
         Py::new(slf.py(), iter)
     }
+
+    pub fn circumference(&self) -> f32 {
+        calculate_circumference(self.vertices.iter().map(|v| &v.0))
+    }
 }
+
+
 
 #[pyclass]
 pub struct ShapeIterator {
